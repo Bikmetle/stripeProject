@@ -1,36 +1,64 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render
 from django.conf import settings
 from django.urls import reverse
-from .models import Item
-import os
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
 import stripe
 
-PRICE_ID = "price_1McDEWGQ7a1wQCsd4MfEbpJp"
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def index(request):
-    stripe.api_key = settings.STRIPE_SECRET_KEY
+    return render(request, 'index.html')
 
+def thanks(request):
+    return render(request, 'thanks.html')
+
+@csrf_exempt
+def checkout(request):
     session = stripe.checkout.Session.create(
-        peyment_method_types=['card'],
+        payment_method_types=['card'],
         line_items=[{
-            'price_data': PRICE_ID,
+            'price': 'price_1McDEWGQ7a1wQCsd4MfEbpJp',
             'quantity': 1,
         }],
         mode='payment',
-        success_url=request.build_absolute_uri(reverse('success')) + '?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url=request.build_absolute_uri(reverse('cancel')),
+        success_url=request.build_absolute_uri(reverse('thanks')) + '?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url=request.build_absolute_uri(reverse('index')),
     )
-    context = {
-        'session_id': session.id,
-        'stripe_public_key': settings.STRIPE_PUBLIC_KEY
-    }
-    return render(request, 'index.html')
 
+    return JsonResponse({
+        'session_id' : session.id,
+        'stripe_public_key' : settings.STRIPE_PUBLIC_KEY
+    })
 
-def BuyView(request, buy_id):
-    items = get_object_or_404(Item, pk=buy_id)
-    return render(request, 'index.html', {'items':items})
+@csrf_exempt
+def stripe_webhook(request):
 
-def ItemView(request, item_id):
-    items = get_object_or_404(Item, pk=item_id)
-    return render(request, 'index.html', {'items':items})
+    print('WEBHOOK!')
+    # You can find your endpoint's secret in your webhook settings
+    endpoint_secret = 'whsec_Xj8wBk2qiUcjDEmYu5kfKkOrJCJ5UUjW'
+
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        print(session)
+        line_items = stripe.checkout.Session.list_line_items(session['id'], limit=1)
+        print(line_items)
+
+    return HttpResponse(status=200)
