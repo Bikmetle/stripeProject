@@ -19,8 +19,10 @@ from stripeAPI import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),
-    path('thanks/', views.thanks, name='thanks'),
-    path('checkout/', views.checkout, name='checkout'),
-    path('stripe_webhook/', views.stripe_webhook, name='stripe_webhook')
+    # path('', views.index, name='index'),
+    # path('thanks/', views.thanks, name='thanks'),
+    # path('checkout/', views.checkout, name='checkout'),
+    # path('stripe_webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('buy/<int:pk>/', views.BuyView, name='buy'),
+    path('item/<int:pk>/', views.ItemView, name='item'),
 ]
