@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-import stripe_keys
+from stripeAPI import stripe_keys
 from django.http import JsonResponse
 from .models import Item
 
