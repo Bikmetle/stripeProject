@@ -8,8 +8,10 @@ This is a single html page that talks to Stripe and creates payment forms for pr
 The project uses Django and Stripe API
 
 API with two methods:
+
 GET /buy/{id}
 to get the Stripe Session Id to pay for the selected product.
+
 GET /item/{id}
 to get a simple HTML page with information about the selected item and a Buy button.
 
