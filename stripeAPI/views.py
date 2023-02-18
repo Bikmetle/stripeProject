@@ -1,11 +1,11 @@
 from django.shortcuts import render, get_object_or_404
-from django.conf import settings
+import stripe_keys
 from django.http import JsonResponse
 from .models import Item
 
 import stripe
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = stripe_keys.STRIPE_SECRET_KEY
 
 def ItemView(request, pk):
     item = get_object_or_404(Item, pk=pk)
@@ -26,5 +26,5 @@ def BuyView(request, pk):
 
     return JsonResponse({
         'session_id' : session.id,
-        'stripe_public_key' : settings.STRIPE_PUBLIC_KEY
+        'stripe_public_key' : stripe_keys.STRIPE_PUBLIC_KEY
     })
